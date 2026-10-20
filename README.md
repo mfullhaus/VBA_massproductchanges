@@ -99,4 +99,4 @@ dodaj nowa zakładkę 'Sheet1' i nazwij kolumny 'ID' oraz "Kod"
 	ErrorHandler:
     MsgBox "Wystąpił błąd: " & Err.Description, vbCritical, "Błąd"
     GoTo CleanUp
-End Sub
+	End Sub
