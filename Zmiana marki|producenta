@@ -1,3 +1,66 @@
 Wklej klasycznie makro i je odpal. Pojawi się okienko z wpisaniem nazwy - podmieni ono automatycznie wartości we wszystkich polach marka/producent.
 
-  
+Sub ZmienMarkeWeWszystkichArkuszach()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim lastCol As Long
+    Dim col As Long
+    Dim targetCol As Long
+    Dim newValue As String
+    
+    ' WARTOŚĆ DO USTAWIENIA
+    newValue = InputBox("Podaj nową wartość dla kolumny 'Marka' lub 'Producent':", "Zmiana wartości")
+    
+    If newValue = "" Then
+        MsgBox "Nie wpisano wartości. Przerywam."
+        Exit Sub
+    End If
+    
+    For Each ws In ThisWorkbook.Worksheets
+        
+        lastCol = ws.Cells(2, ws.Columns.Count).End(xlToLeft).Column
+        targetCol = 0
+        
+        ' Najpierw szukamy kolumny "Marka"
+        For col = 1 To lastCol
+            If ws.Cells(2, col).Value = "Marka" Then
+                targetCol = col
+                Exit For
+            End If
+        Next col
+        
+        ' Jeśli nie znaleziono "Marka", szukamy "Producent"
+        If targetCol = 0 Then
+            For col = 1 To lastCol
+                If ws.Cells(2, col).Value = "Producent" Then
+                    targetCol = col
+                    Exit For
+                End If
+            Next col
+        End If
+        
+        ' Jeśli nadal nie znaleziono - przejdź do kolejnego arkusza
+        If targetCol = 0 Then
+            Debug.Print "Brak kolumny 'Marka' ani 'Producent' w arkuszu: " & ws.Name
+            GoTo NextSheet
+        End If
+        
+        ' Znajdujemy ostatni wiersz
+        lastRow = ws.Cells(ws.Rows.Count, targetCol).End(xlUp).Row
+        
+        ' Zamieniamy wartości w tej kolumnie
+        Dim r As Long
+        For r = 3 To lastRow
+            ws.Cells(r, targetCol).Value = newValue
+        Next r
+        
+NextSheet:
+    Next ws
+    
+    MsgBox "Zakończono zmianę we wszystkich arkuszach."
+
+End Sub
+
+
+
