@@ -1,0 +1,78 @@
+Sub AktualizujParametryZSheet1_Mac()
+    Dim wsDane As Worksheet, wsZmiany As Worksheet
+    Dim colWiersze As Collection, colKolumny As Collection
+    Dim arrDane As Variant, arrZmiany As Variant
+    Dim id As String, param As String, wartosc As Variant
+    Dim i As Long, j As Long, col As Long, row As Long
+    Dim lastRowDane As Long, lastColDane As Long
+    Dim lastRowZmiany As Long, lastColZmiany As Long
+    
+    ' 1. Definicja arkuszy
+    Set wsDane = ThisWorkbook.Sheets(1)
+    Set wsZmiany = ThisWorkbook.Sheets("Sheet1")
+    
+    ' 2. Określenie zakresów z danymi
+    lastRowDane = wsDane.Cells(wsDane.Rows.Count, 1).End(xlUp).Row
+    lastColDane = wsDane.Cells(2, wsDane.Columns.Count).End(xlToLeft).Column
+    lastRowZmiany = wsZmiany.Cells(wsZmiany.Rows.Count, 1).End(xlUp).Row
+    lastColZmiany = wsZmiany.Cells(1, wsZmiany.Columns.Count).End(xlToLeft).Column
+    
+    ' 3. Wczytanie danych do tablic w pamięci (maksymalna wydajność)
+    arrDane = wsDane.Range(wsDane.Cells(1, 1), wsDane.Cells(lastRowDane, lastColDane)).Value
+    arrZmiany = wsZmiany.Range(wsZmiany.Cells(1, 1), wsZmiany.Cells(lastRowZmiany, lastColZmiany)).Value
+    
+    ' 4. Inicjalizacja natywnych kolekcji (Mac-friendly)
+    Set colWiersze = New Collection
+    Set colKolumny = New Collection
+    
+    ' Budowa mapy wierszy i kolumn z ignorowaniem błędów dla duplikatów
+    On Error Resume Next 
+    For i = 3 To lastRowDane
+        id = CStr(arrDane(i, 1))
+        If id <> "" Then colWiersze.Add i, id ' Kluczem jest ID produktu
+    Next i
+    
+    For j = 1 To lastColDane
+        param = Trim(CStr(arrDane(2, j)))
+        If param <> "" Then colKolumny.Add j, param ' Kluczem jest nazwa parametru
+    Next j
+    On Error GoTo 0
+    
+    ' 5. Główna pętla podmieniająca wartości
+    For i = 2 To lastRowZmiany
+        id = CStr(arrZmiany(i, 1))
+        row = 0
+        
+        ' Bezpieczne wyszukiwanie wiersza w kolekcji
+        On Error Resume Next
+        row = colWiersze(id)
+        On Error GoTo 0
+        
+        If row > 0 Then
+            ' Przeszukiwanie parametrów parami (kolumny: parametr, nowa wartość)
+            For j = 2 To lastColZmiany Step 2
+                param = Trim(CStr(arrZmiany(i, j)))
+                
+                If param <> "" Then
+                    wartosc = arrZmiany(i, j + 1)
+                    col = 0
+                    
+                    ' Bezpieczne wyszukiwanie kolumny docelowej
+                    On Error Resume Next
+                    col = colKolumny(param)
+                    On Error GoTo 0
+                    
+                    ' Jeśli parametr istnieje, podmień wartość w tablicy
+                    If col > 0 Then
+                        arrDane(row, col) = wartosc
+                    End If
+                End If
+            Next j
+        End If
+    Next i
+    
+    ' 6. Zrzut wyników z powrotem do arkusza
+    wsDane.Range(wsDane.Cells(1, 1), wsDane.Cells(lastRowDane, lastColDane)).Value = arrDane
+    
+    MsgBox "Parametry zaktualizowane! 🍏🚀", vbInformation, "Sukces"
+End Sub
